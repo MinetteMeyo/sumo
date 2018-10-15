@@ -29,7 +29,6 @@
 #include <utils/common/SUMOVehicleClass.h>
 #include <utils/common/ToString.h>
 #include <utils/geom/GeomHelper.h>
-#include <utils/geom/GeomConvHelper.h>
 #include <utils/geom/PositionVector.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/gui/globjects/GUIGLObjectPopupMenu.h>
@@ -219,10 +218,8 @@ GNEParkingSpace::isValid(SumoXMLAttr key, const std::string& value) {
     switch (key) {
         case SUMO_ATTR_ID:
             return isValidAdditionalID(value);
-        case SUMO_ATTR_POSITION: {
-            bool ok;
-            return GeomConvHelper::parseShapeReporting(value, "user-supplied position", 0, ok, false).size() == 1;
-        }
+        case SUMO_ATTR_POSITION:
+            return canParse<Position>(value);
         case SUMO_ATTR_Z:
             return canParse<double>(value);
         case SUMO_ATTR_WIDTH:
@@ -266,11 +263,9 @@ GNEParkingSpace::setAttribute(SumoXMLAttr key, const std::string& value) {
         case SUMO_ATTR_ID:
             changeAdditionalID(value);
             break;
-        case SUMO_ATTR_POSITION: {
-            bool ok;
-            myPosition = GeomConvHelper::parseShapeReporting(value, "netedit-given", 0, ok, false)[0];
+        case SUMO_ATTR_POSITION:
+            myPosition = parse<Position>(value);
             break;
-        }
         case SUMO_ATTR_WIDTH:
             myWidth = parse<double>(value);
             break;

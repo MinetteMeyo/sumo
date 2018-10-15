@@ -30,7 +30,6 @@
 #include <utils/gui/globjects/GUIGLObjectPopupMenu.h>
 #include <utils/gui/settings/GUIVisualizationSettings.h>
 #include <utils/geom/GeomHelper.h>
-#include <utils/geom/GeomConvHelper.h>
 #include <utils/geom/bezier.h>
 #include <utils/gui/div/GLHelper.h>
 #include <utils/common/MsgHandler.h>
@@ -1075,9 +1074,11 @@ GNEEdge::isValid(SumoXMLAttr key, const std::string& value) {
         case SUMO_ATTR_TYPE:
             return true;
         case SUMO_ATTR_SHAPE: {
-            bool ok = true;
-            PositionVector shape = GeomConvHelper::parseShapeReporting(value, "user-supplied position", 0, ok, true);
-            return ok;
+            if(value.empty()) {
+                return true;
+            } else {
+                return canParse<PositionVector>(value);
+            }
         }
         case SUMO_ATTR_SPREADTYPE:
             return SUMOXMLDefinitions::LaneSpreadFunctions.hasString(value);
@@ -1088,21 +1089,23 @@ GNEEdge::isValid(SumoXMLAttr key, const std::string& value) {
         case SUMO_ATTR_ENDOFFSET:
             return canParse<double>(value) && (parse<double>(value) >= 0);
         case GNE_ATTR_SHAPE_START: {
-            bool ok;
-            if (value != "") {
-                PositionVector shapeStart = GeomConvHelper::parseShapeReporting(value, "user-supplied position", 0, ok, false);
-                return ((shapeStart.size() == 1) && (shapeStart[0] != myNBEdge.getGeometry()[-1]));
-            } else {
+            if (value.empty()) {
                 return true;
+            } else if(canParse<Position>(value)) {
+                Position shapeStart = parse<Position>(value);
+                return (shapeStart != myNBEdge.getGeometry()[-1]);
+            } else {
+                return false;
             }
         }
         case GNE_ATTR_SHAPE_END: {
-            bool ok;
-            if (value != "") {
-                PositionVector shapeStart = GeomConvHelper::parseShapeReporting(value, "user-supplied position", 0, ok, false);
-                return ((shapeStart.size() == 1) && (shapeStart[0] != myNBEdge.getGeometry()[0]));
-            } else {
+            if (value.empty()) {
                 return true;
+            } else if(canParse<Position>(value)) {
+                Position shapeEnd = parse<Position>(value);
+                return (shapeEnd != myNBEdge.getGeometry()[0]);
+            } else {
+                return false;
             }
         }
         case GNE_ATTR_BIDIR:
@@ -1214,8 +1217,7 @@ GNEEdge::setAttribute(SumoXMLAttr key, const std::string& value) {
             myNBEdge.myType = value;
             break;
         case SUMO_ATTR_SHAPE:
-            bool ok;
-            myOrigShape = GeomConvHelper::parseShapeReporting(value, "netedit-given", 0, ok, true);
+            myOrigShape = parse<PositionVector>(value);
             setGeometry(myOrigShape, true, true);
             break;
         case SUMO_ATTR_SPREADTYPE:
