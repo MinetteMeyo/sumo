@@ -483,6 +483,11 @@ public:
     /// @brief finish moving selection
     void finishMoveSelection();
 
+    /// @brief enable drawing of the reference square when testing
+    void enableReferenceSquare() {
+        myTestingMode.drawRefSquare = true;
+    }
+
 protected:
     /// @brief FOX needs this
     GNEViewNet() {}
@@ -573,15 +578,19 @@ private:
     };
 
     /// @brief struct used to group all variables related with testing
-    struct testingMode {
+    struct TestingMode {
         /// @brief default constructor
-        testingMode() :
+        TestingMode() :
             testingEnabled(OptionsCont::getOptions().getBool("gui-testing")),
+            drawRefSquare(false),
             testingWidth(0),
             testingHeight(0) {}
 
         /// @brief flag to enable or disable testing mode
         bool testingEnabled;
+
+        /// @brief flag to enable or disable magenta reference square
+        bool drawRefSquare;
 
         /// @brief Width of viewNet in testing mode
         int testingWidth;
@@ -664,7 +673,7 @@ private:
     SelectingArea mySelectingArea;
 
     /// @brief variable used to save variables related with testing mode
-    testingMode myTestingMode;
+    TestingMode myTestingMode;
 
     /// @brief whether a selection is being moved
     bool myMovingSelection;

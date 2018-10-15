@@ -465,8 +465,11 @@ class NetReader(handler.ContentHandler):
             self._withPhases = True
         self._withConnections = others.get('withConnections', True)
         self._withFoes = others.get('withFoes', True)
-        self._withInternal = others.get('withInternal', False)
         self._withPedestrianConnections = others.get('withPedestrianConnections', False)
+        self._withInternal = others.get('withInternal', self._withPedestrianConnections)
+        if self._withPedestrianConnections and not self._withInternal:
+            sys.stderr.write("Warning: Option withPedestrianConnections requires withInternal\n")
+            self._withInternal = True
 
     def startElement(self, name, attrs):
         if name == 'location':
@@ -650,6 +653,7 @@ def readNet(filename, **others):
         'withConnections' : import all connections (default True)
         'withFoes' : import right-of-way information (default True)
         'withInternal' : import internal edges and lanes (default False)
+        'withPedestrianConnections' : import connections between sidewalks, crossings (default False)
     """
     netreader = NetReader(**others)
     parse(filename, netreader)

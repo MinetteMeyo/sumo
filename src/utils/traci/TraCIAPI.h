@@ -78,7 +78,7 @@ public:
     /// @}
 
     /// @brief Advances by one step (or up to the given time)
-    void simulationStep(int time = 0);
+    void simulationStep(double time = 0);
 
     /// @brief Let sumo load a simulation using the given command line like options.
     void load(const std::vector<std::string>& args);
@@ -409,6 +409,7 @@ public:
         virtual ~POIScope() {}
 
         std::vector<std::string> getIDList() const;
+        int getIDCount() const;
         std::string getType(const std::string& poiID) const;
         libsumo::TraCIPosition getPosition(const std::string& poiID) const;
         libsumo::TraCIColor getColor(const std::string& poiID) const;
@@ -441,6 +442,7 @@ public:
         virtual ~PolygonScope() {}
 
         std::vector<std::string> getIDList() const;
+        int getIDCount() const;
         std::string getType(const std::string& polygonID) const;
         libsumo::TraCIPositionVector getShape(const std::string& polygonID) const;
         libsumo::TraCIColor getColor(const std::string& polygonID) const;

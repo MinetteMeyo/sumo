@@ -40,6 +40,7 @@
 #include "MSDevice_DriverState.h"
 #include "MSDevice_Bluelight.h"
 #include "MSDevice_FCD.h"
+#include "MSRoutingEngine.h"
 
 
 // ===========================================================================
@@ -85,7 +86,7 @@ MSDevice::checkOptions(OptionsCont& oc) {
 
 
 void
-MSDevice::buildVehicleDevices(SUMOVehicle& v, std::vector<MSDevice*>& into) {
+MSDevice::buildVehicleDevices(SUMOVehicle& v, std::vector<MSVehicleDevice*>& into) {
     MSDevice_Vehroutes::buildVehicleDevices(v, into);
     MSDevice_Tripinfo::buildVehicleDevices(v, into);
     MSDevice_Routing::buildVehicleDevices(v, into);
@@ -103,7 +104,7 @@ MSDevice::buildVehicleDevices(SUMOVehicle& v, std::vector<MSDevice*>& into) {
 
 void
 MSDevice::cleanupAll() {
-    MSDevice_Routing::cleanup();
+    MSRoutingEngine::cleanup();
     MSDevice_Tripinfo::cleanup();
     MSDevice_FCD::cleanup();
 }

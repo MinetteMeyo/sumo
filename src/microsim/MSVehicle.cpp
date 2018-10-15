@@ -55,7 +55,7 @@
 #include <microsim/pedestrians/MSPerson.h>
 #include <microsim/pedestrians/MSPModel.h>
 #include <microsim/devices/MSDevice_Transportable.h>
-#include <microsim/devices/MSDevice_Routing.h>
+#include <microsim/devices/MSRoutingEngine.h>
 #include <microsim/devices/MSDevice_Vehroutes.h>
 #include <microsim/output/MSStopOut.h>
 #include <microsim/trigger/MSChargingStation.h>
@@ -581,7 +581,7 @@ MSVehicle::Influencer::implicitDeltaPosRemote(const MSVehicle* veh) {
 SUMOAbstractRouter<MSEdge, SUMOVehicle>&
 MSVehicle::Influencer::getRouterTT() const {
     if (myRoutingMode == 1) {
-        return MSDevice_Routing::getRouterTT();
+        return MSRoutingEngine::getRouterTT();
     } else {
         return MSNet::getInstance()->getRouterTT();
     }
@@ -5357,8 +5357,8 @@ MSVehicle::saveState(OutputDevice& out) {
         it->write(out);
     }
     myParameter->writeParams(out);
-    for (std::vector<MSDevice*>::const_iterator dev = myDevices.begin(); dev != myDevices.end(); ++dev) {
-        (*dev)->saveState(out);
+    for (MSVehicleDevice* const dev : myDevices) {
+        dev->saveState(out);
     }
     out.closeTag();
 }
