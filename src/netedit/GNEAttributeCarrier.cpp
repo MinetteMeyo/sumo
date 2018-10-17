@@ -882,28 +882,6 @@ GNEAttributeCarrier::parseIDs(const std::vector<GNELane*>& ACs) {
 }
 
 
-bool
-GNEAttributeCarrier::parseStringToANDBool(const std::string& string) {
-    // obtain boolean vector (throw exception if string is empty)
-    std::vector<bool> boolValues = GNEAttributeCarrier::parse<std::vector<bool> >(string);
-    // set value of checkbox
-    if (boolValues.size() == 1) {
-        return boolValues.front();
-    } else {
-        int sum = 0;
-        for (auto i : boolValues) {
-            sum += (int)(i);
-        }
-        // only return true if all values are true
-        if ((sum == 0) || (sum != (int)boolValues.size())) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-}
-
-
 bool 
 GNEAttributeCarrier::lanesConsecutives(const std::vector<GNELane*>& lanes) {
     // we need at least two lanes
@@ -2406,6 +2384,10 @@ GNEAttributeCarrier::fillAttributeCarriers() {
                                                ATTRPROPERTY_BOOL | ATTRPROPERTY_DEFAULTVALUE,
                                                "An information whether the polygon shall be filled",
                                                "0");
+        myAllowedTags[currentTag].addAttribute(SUMO_ATTR_LINEWIDTH,
+                                               ATTRPROPERTY_FLOAT | ATTRPROPERTY_POSITIVE | ATTRPROPERTY_DEFAULTVALUE,
+                                               "The default line width for drawing an unfilled polygon",
+                                               "1");
         myAllowedTags[currentTag].addAttribute(SUMO_ATTR_LAYER,
                                                ATTRPROPERTY_STRING | ATTRPROPERTY_DEFAULTVALUE,
                                                "The layer in which the polygon lies",

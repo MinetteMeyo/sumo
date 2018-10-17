@@ -75,11 +75,12 @@
 //#define DEBUG_PEDESTRIAN_COLLISIONS
 //#define DEBUG_LANE_SORTER
 //#define DEBUG_NO_CONNECTION
+//#define DEBUG_SURROUNDING
 
 #define DEBUG_COND (false)
 //#define DEBUG_COND (getID() == "undefined")
 //#define DEBUG_COND2(obj) ((obj != 0 && (obj)->getID() == "disabled"))
-#define DEBUG_COND2(obj) ((obj != 0 && (obj)->isSelected()))
+//#define DEBUG_COND2(obj) ((obj != 0 && (obj)->isSelected()))
 
 // ===========================================================================
 // static member definitions
@@ -3152,6 +3153,93 @@ MSLane::getPartialBeyond() const {
         }
     }
     return result;
+}
+
+
+std::set<MSVehicle*>
+MSLane::getSurroundingVehicles(double startPos, double downstreamDist, double upstreamDist, std::shared_ptr<std::set<const MSLane*> > prevLanes) const {
+    if (prevLanes == nullptr) {
+        prevLanes = std::make_shared<std::set<const MSLane*> >();
+    }
+    if (prevLanes->find(this) != prevLanes->end()) {
+#ifdef DEBUG_SURROUNDING
+        std::cout << "Skipping previously scanned lane: " << getID() << std::endl;
+#endif
+        return std::set<MSVehicle*>();
+    } else {
+        prevLanes->insert(prevLanes->end(), this);
+    }
+#ifdef DEBUG_SURROUNDING
+    std::cout << "Scanning on lane " << myID << "(downstr. " << downstreamDist << ", upstr. " << upstreamDist << "): " << std::endl;
+#endif
+    std::set<MSVehicle*> foundVehicles = getVehicles(MAX2(0., startPos-upstreamDist), MIN2(myLength, startPos + downstreamDist));
+    if (startPos < upstreamDist) {
+        // scan incoming lanes
+        for (const IncomingLaneInfo& incomingInfo : getIncomingLanes()){
+            MSLane* incoming = incomingInfo.lane;
+#ifdef DEBUG_SURROUNDING
+            std::cout << "Checking on incoming: " << incoming->getID() << std::endl;
+            if (prevLanes->find(incoming) != prevLanes->end()) {
+                std::cout << "Skipping previous: " << incoming->getID() << std::endl;
+            }
+#endif
+            std::set<MSVehicle*> newVehs = incoming->getSurroundingVehicles(incoming->getLength(), downstreamDist, upstreamDist-startPos, prevLanes);
+            foundVehicles.insert(newVehs.begin(), newVehs.end());
+        }
+    }
+
+    if (getLength() < startPos + downstreamDist) {
+        // scan successive lanes
+        const MSLinkCont& lc = getLinkCont();
+        for (MSLink* l : lc) {
+            std::set<MSVehicle*> newVehs = l->getViaLaneOrLane()->getSurroundingVehicles(0.0, getLength()-startPos, downstreamDist, prevLanes);
+            foundVehicles.insert(newVehs.begin(), newVehs.end());
+        }
+    }
+#ifdef DEBUG_SURROUNDING
+    std::cout << "On lane (2) " << myID << ": \nFound vehicles: " << std::endl;
+    for (MSVehicle* v : foundVehicles) {
+        std::cout << v->getID() << " pos = " << v->getPositionOnLane() << std::endl;
+    }
+#endif
+    return foundVehicles;
+}
+
+
+std::set<MSVehicle*>
+MSLane::getVehicles(double a, double b) const {
+    std::set<MSVehicle*> res;
+    const VehCont& vehs = getVehiclesSecure();
+
+    size_t nV = vehs.size();
+    if (nV == 0) {
+        releaseVehicles();
+        return res;
+    }
+
+    // query interval to lane dimensions
+    a = MAX2(0., a);
+    b = MIN2(myLength, b);
+
+    // Find indices ia (min with veh in interval)
+    //  and ib (max with veh in interval)
+    size_t ia = 0, ib = nV-1;
+    while (ia != nV) {
+        if(vehs[ia]->getPositionOnLane() >= a) {
+            break;
+        }
+        ++ia;
+    }
+    while (ib != -1) {
+        if(vehs[ib]->getBackPositionOnLane() <= b){
+            break;
+        }
+        --ib;
+    }
+
+    res.insert(vehs.begin()+ia, vehs.begin()+ib+1);
+    releaseVehicles();
+    return res;
 }
 
 

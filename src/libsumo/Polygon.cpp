@@ -72,6 +72,10 @@ Polygon::getFilled(const std::string& polygonID) {
     return getPolygon(polygonID)->getFill();
 }
 
+double
+Polygon::getLineWidth(const std::string& polygonID) {
+    return getPolygon(polygonID)->getLineWidth();
+}
 
 TraCIColor
 Polygon::getColor(const std::string& polygonID) {
@@ -109,11 +113,11 @@ Polygon::setColor(const std::string& polygonID, const TraCIColor& c) {
 
 
 void
-Polygon::add(const std::string& polygonID, const TraCIPositionVector& shape, const TraCIColor& color, bool fill, const std::string& polygonType, int layer) {
+Polygon::add(const std::string& polygonID, const TraCIPositionVector& shape, const TraCIColor& color, bool fill, double lineWidth, const std::string& polygonType, int layer) {
     ShapeContainer& shapeCont = MSNet::getInstance()->getShapeContainer();
     PositionVector pShape = Helper::makePositionVector(shape);
     RGBColor col = Helper::makeRGBColor(color);
-    if (!shapeCont.addPolygon(polygonID, polygonType, col, (double)layer, Shape::DEFAULT_ANGLE, Shape::DEFAULT_IMG_FILE, Shape::DEFAULT_RELATIVEPATH, pShape, false, fill)) {
+    if (!shapeCont.addPolygon(polygonID, polygonType, col, (double)layer, Shape::DEFAULT_ANGLE, Shape::DEFAULT_IMG_FILE, Shape::DEFAULT_RELATIVEPATH, pShape, false, fill, lineWidth)) {
         throw TraCIException("Could not add polygon '" + polygonID + "'");
     }
 }
@@ -133,6 +137,12 @@ void
 Polygon::setFilled(std::string polygonID, bool filled) {
     SUMOPolygon* p = getPolygon(polygonID);
     p->setFill(filled);
+}
+
+void
+Polygon::setLineWidth(std::string polygonID, double lineWidth) {
+    SUMOPolygon* p = getPolygon(polygonID);
+    p->setLineWidth(lineWidth);
 }
 
 
@@ -195,6 +205,8 @@ Polygon::handleVariable(const std::string& objID, const int variable, VariableWr
             return wrapper->wrapColor(objID, variable, getColor(objID));
         case VAR_FILL:
             return wrapper->wrapInt(objID, variable, getFilled(objID));
+        case VAR_WIDTH:
+            return wrapper->wrapDouble(objID, variable, getLineWidth(objID));
         default:
             return false;
     }

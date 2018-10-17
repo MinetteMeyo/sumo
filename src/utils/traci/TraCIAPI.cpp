@@ -393,7 +393,10 @@ TraCIAPI::getPolygon(int cmd, int var, const std::string& id, tcpip::Storage* ad
     tcpip::Storage inMsg;
     send_commandGetVariable(cmd, var, id, add);
     processGET(inMsg, cmd, TYPE_POLYGON);
-    int size = inMsg.readByte();
+    int size = inMsg.readUnsignedByte();
+    if (size == 0) {
+        size = inMsg.readInt();
+    }
     libsumo::TraCIPositionVector ret;
     for (int i = 0; i < size; ++i) {
         libsumo::TraCIPosition p;
@@ -837,10 +840,8 @@ TraCIAPI::GUIScope::setBoundary(const std::string& viewID, double xmin, double y
     content.writeByte(2);
     content.writeDouble(xmin);
     content.writeDouble(ymin);
-    content.writeDouble(0.);
     content.writeDouble(xmax);
     content.writeDouble(ymax);
-    content.writeDouble(0.);
     myParent.send_commandSetValue(CMD_SET_GUI_VARIABLE, VAR_VIEW_BOUNDARY, viewID, content);
     tcpip::Storage inMsg;
     myParent.check_resultState(inMsg, CMD_SET_GUI_VARIABLE);
@@ -1376,6 +1377,11 @@ TraCIAPI::PolygonScope::getIDCount() const {
     return myParent.getInt(CMD_GET_POLYGON_VARIABLE, ID_COUNT, "");
 }
 
+double
+TraCIAPI::PolygonScope::getLineWidth(const std::string& polygonID) const {
+    return myParent.getDouble(CMD_GET_POLYGON_VARIABLE, VAR_WIDTH, polygonID);
+}
+
 std::string
 TraCIAPI::PolygonScope::getType(const std::string& polygonID) const {
     return myParent.getString(CMD_GET_POLYGON_VARIABLE, VAR_TYPE, polygonID);
@@ -1391,6 +1397,15 @@ TraCIAPI::PolygonScope::getColor(const std::string& polygonID) const {
     return myParent.getColor(CMD_GET_POLYGON_VARIABLE, VAR_COLOR, polygonID);
 }
 
+void
+TraCIAPI::PolygonScope::setLineWidth(const std::string& polygonID, const double lineWidth) const {
+    tcpip::Storage content;
+    content.writeUnsignedByte(TYPE_DOUBLE);
+    content.writeDouble(lineWidth);
+    myParent.send_commandSetValue(CMD_SET_POLYGON_VARIABLE, VAR_WIDTH, polygonID, content);
+    tcpip::Storage inMsg;
+    myParent.check_resultState(inMsg, CMD_SET_POLYGON_VARIABLE);
+}
 
 void
 TraCIAPI::PolygonScope::setType(const std::string& polygonID, const std::string& setType) const {
@@ -1402,19 +1417,26 @@ TraCIAPI::PolygonScope::setType(const std::string& polygonID, const std::string&
     myParent.check_resultState(inMsg, CMD_SET_POLYGON_VARIABLE);
 }
 
+
 void
 TraCIAPI::PolygonScope::setShape(const std::string& polygonID, const libsumo::TraCIPositionVector& shape) const {
     tcpip::Storage content;
     content.writeUnsignedByte(TYPE_POLYGON);
-    content.writeInt((int)shape.size());
-    for (int i = 0; i < (int)shape.size(); ++i) {
-        content.writeDouble(shape[i].x);
-        content.writeDouble(shape[i].y);
+    if (shape.size() < 256) {
+        content.writeUnsignedByte((int)shape.size());
+    } else {
+        content.writeUnsignedByte(0);
+        content.writeInt((int)shape.size());
     }
-    myParent.send_commandSetValue(CMD_SET_POLYGON_VARIABLE, VAR_POSITION, polygonID, content);
+    for (const libsumo::TraCIPosition& pos : shape) {
+        content.writeDouble(pos.x);
+        content.writeDouble(pos.y);
+    }
+    myParent.send_commandSetValue(CMD_SET_POLYGON_VARIABLE, VAR_SHAPE, polygonID, content);
     tcpip::Storage inMsg;
     myParent.check_resultState(inMsg, CMD_SET_POLYGON_VARIABLE);
 }
+
 
 void
 TraCIAPI::PolygonScope::setColor(const std::string& polygonID, const libsumo::TraCIColor& c) const {

@@ -157,6 +157,8 @@ public:
 
     void writeResponseWithLength(tcpip::Storage& outputStorage, tcpip::Storage& tempMsg);
 
+    void writePositionVector(tcpip::Storage& outputStorage, const libsumo::TraCIPositionVector& shape);
+
 
     /// @name Helpers for reading and checking values
     /// @{
@@ -413,11 +415,13 @@ private:
     void addSubscriptionFilterNoOpposite();
     void addSubscriptionFilterDownstreamDistance(double dist);
     void addSubscriptionFilterUpstreamDistance(double dist);
-    void addSubscriptionFilterCFManeuver();
-    void addSubscriptionFilterLCManeuver();
-    void addSubscriptionFilterTurnManeuver();
+    void addSubscriptionFilterLeadFollow();
+    // TODO: for libsumo, implement convenience definitions present in python client:
+    //    void addSubscriptionFilterCF();
+    //    void addSubscriptionFilterLC(int direction);
+    void addSubscriptionFilterTurn();
     void addSubscriptionFilterVClass(SVCPermissions vClasses);
-    void addSubscriptionFilterVType(std::vector<std::string> vTypes);
+    void addSubscriptionFilterVType(std::set<std::string> vTypes);
     bool isVehicleToVehicleContextSubscription(const libsumo::Subscription& s);
 
     bool findObjectShape(int domain, const std::string& id, PositionVector& shape);
