@@ -30,7 +30,9 @@
 // ===========================================================================
 #include <config.h>
 
+#include <memory>
 #include <vector>
+#include <map>
 #include <deque>
 #include <cassert>
 #include <utils/common/Named.h>
@@ -57,6 +59,11 @@ class MSVehicleControl;
 class OutputDevice;
 class MSLeaderInfo;
 
+// ===========================================================================
+// type definitions
+// ===========================================================================
+/// Coverage info
+typedef std::map<const MSLane*, std::pair<double, double> >  LaneCoverageInfo; // also declared in libsumo/Helper.h!
 
 // ===========================================================================
 // class definitions
@@ -865,9 +872,10 @@ public:
     /// @param[in] startPos - start position of the search on the first lane
     /// @param[in] downstreamDist - distance to search downstream
     /// @param[in] upstreamDist - distance to search upstream
-    /// @param[in] prevLanes - lanes, which were already scanned
+    /// @param[in/out] checkedLanes - lanes, which were already scanned (current lane is added, if not present,
+    ///                otherwise the scan is aborted; TODO: this may disregard unscanned parts of the lane in specific circular set ups.)
     /// @return    vehs - List of vehicles found
-    std::set<MSVehicle*> getSurroundingVehicles(double startPos, double downstreamDist, double upstreamDist, std::shared_ptr<std::set<const MSLane*> > prevLanes = nullptr) const;
+    std::set<MSVehicle*> getSurroundingVehicles(double startPos, double downstreamDist, double upstreamDist, std::shared_ptr<LaneCoverageInfo> checkedLanes) const;
 
     /// @brief Returns all vehicles on the lane overlapping with the interval [a,b]
     /// @note  Does not consider vehs with front on subsequent lanes
@@ -875,7 +883,9 @@ public:
 
 
     /// @brief Returns all upcoming junctions within given range along the given (non-internal) continuation lanes measured from given position
-    std::set<std::pair<const MSJunction*, const MSLink*> > getUpcomingJunctions(double pos, double range, const std::vector<MSLane*>& contLanes) const;
+    std::vector<const MSJunction*> getUpcomingJunctions(double pos, double range, const std::vector<MSLane*>& contLanes) const;
+    /// @brief Returns all upcoming junctions within given range along the given (non-internal) continuation lanes measured from given position
+    std::vector<const MSLink*> getUpcomingLinks(double pos, double range, const std::vector<MSLane*>& contLanes) const;
 
     /** @brief get the most likely precedecessor lane (sorted using by_connections_to_sorter).
      * The result is cached in myLogicalPredecessorLane

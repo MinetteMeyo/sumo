@@ -3157,17 +3157,16 @@ MSLane::getPartialBeyond() const {
 
 
 std::set<MSVehicle*>
-MSLane::getSurroundingVehicles(double startPos, double downstreamDist, double upstreamDist, std::shared_ptr<std::set<const MSLane*> > prevLanes) const {
-    if (prevLanes == nullptr) {
-        prevLanes = std::make_shared<std::set<const MSLane*> >();
-    }
-    if (prevLanes->find(this) != prevLanes->end()) {
+MSLane::getSurroundingVehicles(double startPos, double downstreamDist, double upstreamDist, std::shared_ptr<LaneCoverageInfo> checkedLanes) const {
+    assert(checkedLanes != nullptr);
+    if (checkedLanes->find(this) != checkedLanes->end()) {
 #ifdef DEBUG_SURROUNDING
         std::cout << "Skipping previously scanned lane: " << getID() << std::endl;
 #endif
         return std::set<MSVehicle*>();
     } else {
-        prevLanes->insert(prevLanes->end(), this);
+        // Add this lane's coverage to the lane coverage info
+        (*checkedLanes)[this] = std::make_pair(MAX2(0.0, startPos-upstreamDist), MIN2(startPos+downstreamDist, getLength()));
     }
 #ifdef DEBUG_SURROUNDING
     std::cout << "Scanning on lane " << myID << "(downstr. " << downstreamDist << ", upstr. " << upstreamDist << "): " << std::endl;
@@ -3179,11 +3178,11 @@ MSLane::getSurroundingVehicles(double startPos, double downstreamDist, double up
             MSLane* incoming = incomingInfo.lane;
 #ifdef DEBUG_SURROUNDING
             std::cout << "Checking on incoming: " << incoming->getID() << std::endl;
-            if (prevLanes->find(incoming) != prevLanes->end()) {
+            if (checkedLanes->find(incoming) != checkedLanes->end()) {
                 std::cout << "Skipping previous: " << incoming->getID() << std::endl;
             }
 #endif
-            std::set<MSVehicle*> newVehs = incoming->getSurroundingVehicles(incoming->getLength(), downstreamDist, upstreamDist-startPos, prevLanes);
+            std::set<MSVehicle*> newVehs = incoming->getSurroundingVehicles(incoming->getLength(), downstreamDist, upstreamDist-startPos, checkedLanes);
             foundVehicles.insert(newVehs.begin(), newVehs.end());
         }
     }
@@ -3192,7 +3191,7 @@ MSLane::getSurroundingVehicles(double startPos, double downstreamDist, double up
         // scan successive lanes
         const MSLinkCont& lc = getLinkCont();
         for (MSLink* l : lc) {
-            std::set<MSVehicle*> newVehs = l->getViaLaneOrLane()->getSurroundingVehicles(0.0, getLength()-startPos, downstreamDist, prevLanes);
+            std::set<MSVehicle*> newVehs = l->getViaLaneOrLane()->getSurroundingVehicles(0.0, getLength()-startPos, downstreamDist, checkedLanes);
             foundVehicles.insert(newVehs.begin(), newVehs.end());
         }
     }
@@ -3242,10 +3241,21 @@ MSLane::getVehicles(double a, double b) const {
     return res;
 }
 
-std::set<std::pair<const MSJunction*, const MSLink*> >
+std::vector<const MSJunction*>
 MSLane::getUpcomingJunctions(double pos, double range, const std::vector<MSLane*>& contLanes) const {
     // set of upcoming junctions and the corresponding conflict links
-    std::set<std::pair<const MSJunction*, const MSLink*> > junctions;
+    std::vector<const MSJunction*> junctions;
+    for (auto l : getUpcomingLinks(pos, range, contLanes)) {
+        junctions.insert(junctions.end(), l->getJunction());
+    }
+    return junctions;
+}
+
+
+std::vector<const MSLink*>
+MSLane::getUpcomingLinks(double pos, double range, const std::vector<MSLane*>& contLanes) const {
+    // set of upcoming junctions and the corresponding conflict links
+    std::vector<const MSLink*> links;
 
     // Currently scanned lane
     const MSLane* lane = this;
@@ -3261,7 +3271,7 @@ MSLane::getUpcomingJunctions(double pos, double range, const std::vector<MSLane*
     if (lane->isInternal()) {
         assert(*contLanesIt == nullptr);
         link = lane->getEntryLink();
-        junctions.insert(std::make_pair(link->getJunction(), link));
+        links.insert(links.end(), link);
         dist += link->getInternalLengthsAfter();
         // next non-internal lane behind junction
         lane = link->getLane();
@@ -3275,10 +3285,10 @@ MSLane::getUpcomingJunctions(double pos, double range, const std::vector<MSLane*
             break;
         }
         link = lane->getLinkTo(*contLanesIt);
-        junctions.insert(std::make_pair(link->getJunction(), link));
+        links.insert(links.end(), link);
         lane = *contLanesIt;
     }
-    return junctions;
+    return links;
 }
 
 
