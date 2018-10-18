@@ -266,13 +266,9 @@ GNEParkingSpace::setAttribute(SumoXMLAttr key, const std::string& value) {
         case SUMO_ATTR_POSITION:
             myPosition = parse<Position>(value);
             break;
-<<<<<<< HEAD
-=======
-        }
         case SUMO_ATTR_Z:
             myZ = parse<double>(value);
             break;
->>>>>>> master
         case SUMO_ATTR_WIDTH:
             myWidth = parse<double>(value);
             break;
