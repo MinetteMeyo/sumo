@@ -40,14 +40,14 @@ netedit.inspectMode()
 # inspect first polygon
 netedit.leftClick(referencePosition, 100, 50)
 
-# Change parameter 4 with a non valid value
-netedit.modifyAttribute(5, "dummyLayer")
+# Change parameter 6 with a non valid value
+netedit.modifyAttribute(6, "dummyLayer")
 
-# Change parameter 4 with a valid value (negative)
-netedit.modifyAttribute(5, "-2")
+# Change parameter 6 with a valid value (negative)
+netedit.modifyAttribute(6, "-2")
 
-# Change parameter 4 with a valid value (negative)
-netedit.modifyAttribute(5, "2.5")
+# Change parameter 6 with a valid value (negative)
+netedit.modifyAttribute(6, "2.5")
 
 # Check undos and redos
 netedit.undo(referencePosition, 2)

@@ -429,11 +429,11 @@ Helper::applySubscriptionFilters(const Subscription& s, std::set<std::string>& o
     }
 
     // Whether vehicles on opposite lanes shall be taken into account
-    const bool disregardOppositeDirection = s.activeFilters & SUBS_FILTER_NOOPPOSITE;
+    const bool disregardOppositeDirection = (s.activeFilters & SUBS_FILTER_NOOPPOSITE) != 0;
 
     // Check filter specification consistency
     // TODO: Warn only once
-    if (disregardOppositeDirection && (s.activeFilters & SUBS_FILTER_NO_RTREE == 0)) {
+    if (disregardOppositeDirection && (s.activeFilters & SUBS_FILTER_NO_RTREE) == 0) {
         WRITE_WARNING("Ignoring no-opposite subscription filter for geographic range object collection. Consider using the 'lanes' filter.")
     }
 
@@ -487,7 +487,7 @@ Helper::applySubscriptionFilters(const Subscription& s, std::set<std::string>& o
                             continue;
                         }
                         // Index of opposite lane at relative offset ix
-                        const int ix_opposite = opposite->getLanes().size() - 1 - (vehLane->getIndex() + ix - vehEdge->getLanes().size());
+                        const int ix_opposite = (int)opposite->getLanes().size() - 1 - (vehLane->getIndex() + ix - vehEdge->getLanes().size());
                         if (ix_opposite < 0) {
 #ifdef DEBUG_SURROUNDING
                             std::cout << "No lane on opposite at index " << ix_opposite << std::endl;
@@ -509,6 +509,12 @@ Helper::applySubscriptionFilters(const Subscription& s, std::set<std::string>& o
 
             if (s.activeFilters & SUBS_FILTER_TURN) {
                 // TODO: Only return foes on upcoming junction in context subscription result
+
+                // get upcoming junctions and vialanes within downstream distance, where foe links exist or at least the link direction is not straight
+                MSLane* lane = v->getLane();
+                std::set<std::pair<const MSJunction*, const MSLink*> > junctions = lane->getUpcomingJunctions(v->getPositionOnLane(), downstreamDist, v->getBestLanesContinuation());
+
+                // TODO: GO ON HERE. iterate through junctions and find approaching foes within upstreamDist
             }
 
         } else {
