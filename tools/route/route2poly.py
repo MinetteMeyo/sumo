@@ -28,6 +28,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from sumolib.output import parse  # noqa
 from sumolib.net import readNet  # noqa
 from sumolib.miscutils import Colorgen  # noqa
+from sumolib import geomhelper
 
 
 def parse_args(args):
@@ -46,6 +47,7 @@ def parse_args(args):
                          default=False, help="write polgyons with geo-coordinates")
     optParser.add_option("--internal", action="store_true",
                          default=False, help="include internal edges in generated shapes")
+    optParser.add_option("--spread", type="float", help="spread polygons laterally to avoid overlap")
     optParser.add_option("--blur", type="float",
                          default=0, help="maximum random disturbance to route geometry")
     optParser.add_option("--scale-width", type="float", dest="scaleWidth",
@@ -53,7 +55,10 @@ def parse_args(args):
     optParser.add_option("--standalone", action="store_true", default=False,
                          help="Parse stand-alone routes that are not define as child-element of a vehicle")
     optParser.add_option("--filter-output.file", dest="filterOutputFile", help="only write output for edges in the given selection file")
+    optParser.add_option("--seed", type="int", help="random seed")
     options, args = optParser.parse_args(args=args)
+    if options.seed:
+        random.seed(options.seed)
     if len(args) < 2:
         sys.exit(USAGE)
     try:
@@ -65,6 +70,7 @@ def parse_args(args):
         sys.exit(USAGE)
     if options.outfile is None:
         options.outfile = options.routefiles[0] + ".poly.xml"
+
     return options
 
 
@@ -73,9 +79,27 @@ def randomize_pos(pos, blur):
 
 
 MISSING_EDGES = set()
+SPREAD = defaultdict(set)
+SPREAD_MAX = [0]
+def getSpread(lanes):
+    """find the smalles spread value that is available for all lanes"""
+    cands = [0]
+    for i in range(1, SPREAD_MAX[0] + 2):
+        cands += [i, -i]
+    for i in cands:
+        if all([i not in SPREAD[l] for l in lanes]):
+            SPREAD_MAX[0] = max(SPREAD_MAX[0], i)
+            [SPREAD[l].add(i) for l in lanes]
+            return i
+        else:
+            pass
+            #print(i, [l.getID() for l in lanes])
+    assert(False)
+
 
 def generate_poly(options, net, id, color, edges, outf, type="route", lineWidth=None, params={}):
     lanes = []
+    spread = 0
     for e in edges:
         if net.hasEdge(e):
             lanes.append(net.getEdge(e).getLane(0))
@@ -87,33 +111,39 @@ def generate_poly(options, net, id, color, edges, outf, type="route", lineWidth=
         return
     if options.internal and len(lanes) > 1:
         lanes2 = []
+        preferedCon = -1
         for i, lane in enumerate(lanes):
             edge = lane.getEdge()
             if i == 0:
                 cons = edge.getConnections(lanes[i + 1].getEdge())
                 if cons:
-                    lanes2.append(cons[0].getFromLane())
+                    lanes2.append(cons[preferedCon].getFromLane())
                 else:
                     lanes2.append(lane)
             else:
                 cons = lanes[i - 1].getEdge().getConnections(edge)
                 if cons:
-                    viaID = cons[0].getViaLaneID()
+                    viaID = cons[preferedCon].getViaLaneID()
                     if viaID:
                         via = net.getLane(viaID)
                         lanes2.append(via)
                         cons2 = via.getEdge().getConnections(edge)
                         if cons2:
-                            viaID2 = cons2[0].getViaLaneID()
+                            viaID2 = cons2[preferedCon].getViaLaneID()
                             if viaID2:
                                 via2 = net.getLane(viaID2)
                                 lanes2.append(via2)
-                        lanes2.append(cons[0].getToLane())
+                        lanes2.append(cons[preferedCon].getToLane())
                 else:
                     lanes2.append(lane)
         lanes = lanes2
 
     shape = list(itertools.chain(*list(l.getShape() for l in lanes)))
+    if options.spread:
+        spread = getSpread(lanes)
+        if spread:
+            shape = geomhelper.move2side(shape, options.spread * spread)
+            params["spread"] = str(spread)
     if options.blur > 0:
         shape = [randomize_pos(pos, options.blur) for pos in shape]
 

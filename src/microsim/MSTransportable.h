@@ -124,7 +124,7 @@ public:
         void setDeparted(SUMOTime now);
 
         /// logs end of the step
-        virtual void setArrived(SUMOTime now);
+        virtual void setArrived(MSNet* net, MSTransportable* transportable, SUMOTime now);
 
         /// Whether the transportable waits for a vehicle of the line specified.
         virtual bool isWaitingFor(const std::string& line) const;
@@ -216,11 +216,15 @@ public:
     class Stage_Trip : public Stage {
     public:
         /// constructor
-        Stage_Trip(const MSEdge* origin, const MSEdge* destination, const SUMOTime duration, const SVCPermissions modeSet,
-            const std::string& vTypes, const double walkFactor, const double arrivalPos);
+        Stage_Trip(const MSEdge* origin, const MSEdge* destination, MSStoppingPlace* toStop, const SUMOTime duration, const SVCPermissions modeSet,
+            const std::string& vTypes, const double speed, const double walkFactor, const double departPosLat, const double arrivalPos);
 
         /// destructor
         virtual ~Stage_Trip();
+
+        const MSEdge* getEdge() const;
+
+        double getEdgePos(SUMOTime now) const;
 
         Position getPosition(SUMOTime now) const;
 
@@ -231,6 +235,9 @@ public:
         }
 
         std::string getStageSummary() const;
+
+        /// logs end of the step
+        virtual void setArrived(MSNet* net, MSTransportable* transportable, SUMOTime now);
 
         /// proceeds to the next step
         virtual void proceed(MSNet* net, MSTransportable* transportable, SUMOTime now, Stage* previous);
@@ -271,11 +278,20 @@ public:
         /// @brief The allowed modes of transportation
         const SVCPermissions myModeSet;
 
+        /// @brief The possible vehicles to use
+        const std::string myVTypes;
+
+        /// @brief The walking speed
+        const double mySpeed;
+
         /// @brief The factor to apply to walking durations
         const double myWalkFactor;
 
-        /// @brief The possible vehicles to use
-        const std::string myVTypes;
+        /// @brief The depart position
+        double myDepartPos;
+
+        /// @brief The lateral depart position
+        const double myDepartPosLat;
 
     private:
         /// @brief Invalidated copy constructor.
@@ -416,7 +432,7 @@ public:
         void setVehicle(SUMOVehicle* v);
 
         /// @brief marks arrival time and records driven distance
-        void setArrived(SUMOTime now);
+        void setArrived(MSNet* net, MSTransportable* transportable, SUMOTime now);
 
         /** @brief Called for writing the events output
         * @param[in] os The stream to write the information into
@@ -653,16 +669,6 @@ public:
 
     /// @brief adapt plan when the vehicle reroutes and now stops at replacement instead of orig
     void rerouteParkingArea(MSStoppingPlace* orig, MSStoppingPlace* replacement);
-
-    /** @brief Performs a rerouting using the given router
-    *
-    * Tries to find a new (intermodal) plan between the current edge and the destination edge, first.
-    * Tries to replace the current plan by the new one.
-    *
-    * @param[in] t The time for which the route is computed
-    * @param[in] router The router to use
-    */
-    void reroute(SUMOTime t, const std::string& info, SUMOAbstractRouter<MSEdge, SUMOVehicle>& router, const bool onInit = false, const bool withTaz = false);
 
 
 protected:
