@@ -216,11 +216,6 @@ GNEParkingSpace::isValid(SumoXMLAttr key, const std::string& value) {
             return isValidAdditionalID(value);
         case SUMO_ATTR_POSITION:
             return canParse<Position>(value);
-<<<<<<< HEAD
-        case SUMO_ATTR_Z:
-            return canParse<double>(value);
-=======
->>>>>>> remotes/origin/master
         case SUMO_ATTR_WIDTH:
             return canParse<double>(value) && (parse<double>(value) >= 0);
         case SUMO_ATTR_LENGTH:
@@ -264,12 +259,6 @@ GNEParkingSpace::setAttribute(SumoXMLAttr key, const std::string& value) {
             break;
         case SUMO_ATTR_POSITION:
             myPosition = parse<Position>(value);
-<<<<<<< HEAD
-            break;
-        case SUMO_ATTR_Z:
-            myZ = parse<double>(value);
-=======
->>>>>>> remotes/origin/master
             break;
         case SUMO_ATTR_WIDTH:
             myWidth = parse<double>(value);

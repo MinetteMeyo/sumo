@@ -1283,12 +1283,7 @@ GNEAdditionalHandler::buildAdditional(GNEViewNet* viewNet, bool allowUndoRedo, S
         }
         case SUMO_TAG_PARKING_SPACE: {
             // obtain specify attributes of Parking Space
-<<<<<<< HEAD
             Position pos = GNEAttributeCarrier::parse<Position>(values[SUMO_ATTR_POSITION]);
-            double z = GNEAttributeCarrier::parse<double>(values[SUMO_ATTR_Z]);
-=======
-            Position pos = GeomConvHelper::parseShapeReporting(values[SUMO_ATTR_POSITION], "user-supplied position", 0, ok, false)[0];
->>>>>>> remotes/origin/master
             double width = GNEAttributeCarrier::parse<double>(values[SUMO_ATTR_WIDTH]);
             double lenght = GNEAttributeCarrier::parse<double>(values[SUMO_ATTR_LENGTH]);
             double angle = GNEAttributeCarrier::parse<double>(values[SUMO_ATTR_ANGLE]);
