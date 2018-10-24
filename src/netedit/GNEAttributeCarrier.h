@@ -210,6 +210,7 @@ public:
         TAGPROPERTY_NETELEMENT =          1 << 0,   // Edges, Junctions, Lanes...
         TAGPROPERTY_ADDITIONAL =          1 << 1,   // Bus Stops, Charging Stations, Detectors...
         TAGPROPERTY_SHAPE =               1 << 2,   // POIs, Polygons
+<<<<<<< HEAD
         TAGPROPERTY_TAZ =                 1 << 3,   // Traffic Assignment Zones
         TAGPROPERTY_STOPPINGPLACE =       1 << 4,   // StoppingPlaces (BusStops, ChargingStations...)
         TAGPROPERTY_DETECTOR =            1 << 5,   // Detectors (E1, E2...)
@@ -236,6 +237,33 @@ public:
         TAGPROPERTY_PLACEDOVER_JUNCTION = 1 << 26,  // Element will be placed over a junction
         TAGPROPERTY_PLACEDOVER_EDGES =    1 << 27,  // Element will be placed over a list of edges
         TAGPROPERTY_PLACEDOVER_LANES =    1 << 28,  // Element will be placed over a list of lanes
+=======
+        TAGPROPERTY_STOPPINGPLACE =       1 << 3,   // StoppingPlaces (BusStops, ChargingStations...)
+        TAGPROPERTY_DETECTOR =            1 << 4,   // Detectors (E1, E2...)
+        TAGPROPERTY_ROUTEELEMENT =        1 << 5,   // VTypes, Vehicles, Flows...
+        TAGPROPERTY_DRAWABLE =            1 << 6,   // Element can be drawed in view
+        TAGPROPERTY_BLOCKMOVEMENT =       1 << 7,   // Element can block their movement
+        TAGPROPERTY_BLOCKSHAPE =          1 << 8,   // Element can block their shape
+        TAGPROPERTY_CLOSESHAPE =          1 << 9,   // Element can close their shape
+        TAGPROPERTY_GEOPOSITION =         1 << 10,  // Element's position can be defined using a GEO position
+        TAGPROPERTY_GEOSHAPE =            1 << 11,  // Element's shape acn be defined using a GEO Shape
+        TAGPROPERTY_DIALOG =              1 << 12,  // Element can be edited using a dialog (GNECalibratorDialog, GNERerouterDialog...)
+        TAGPROPERTY_PARENT =              1 << 13,  // Element will be writed in XML as child of another element (E3Entry -> E3Detector...)
+        TAGPROPERTY_MINIMUMCHILDS =       1 << 14,  // Element will be only writed in XML if has a minimum number of childs
+        TAGPROPERTY_REPARENT =            1 << 15,  // Element can be reparent
+        TAGPROPERTY_SYNONYM =             1 << 16,  // Element will be written with a different name in der XML
+        TAGPROPERTY_AUTOMATICSORTING =    1 << 17,  // Element sort automatic their Childs (used by Additionals)
+        TAGPROPERTY_SELECTABLE =          1 << 18,  // Element is selectable
+        TAGPROPERTY_MASKSTARTENDPOS =     1 << 19,  // Element mask attributes StartPos and EndPos as "lenght" (Only used in the appropiate GNEFrame)
+        TAGPROPERTY_MASKXYZPOSITION =      1 << 20,  // Element mask attributes X and Y as "Position"
+        TAGPROPERTY_WRITECHILDSSEPARATE = 1 << 21,  // Element writes their childs in a separated filename
+        TAGPROPERTY_PLACEDOVER_VIEW =     1 << 22,  // Element will be placed in view
+        TAGPROPERTY_PLACEDOVER_EDGE =     1 << 23,  // Element will be placed over an edge
+        TAGPROPERTY_PLACEDOVER_LANE =     1 << 24,  // Element will be placed over a lane
+        TAGPROPERTY_PLACEDOVER_JUNCTION = 1 << 25,  // Element will be placed over a junction
+        TAGPROPERTY_PLACEDOVER_EDGES =    1 << 26,  // Element will be placed over a list of edges
+        TAGPROPERTY_PLACEDOVER_LANES =    1 << 27,  // Element will be placed over a list of lanes
+>>>>>>> remotes/origin/master
     };
 
     /// @brief struct with the attribute Properties
@@ -370,8 +398,8 @@ public:
         /// @brief return true if tag correspond to an element that can mask the attributes "start" and "end" position as attribute "lenght"
         bool canMaskStartEndPos() const;
 
-        /// @brief return true if tag correspond to an element that can mask the attributes "X" and "Y" position as attribute "Position"
-        bool canMaskXYPositions() const;
+        /// @brief return true if tag correspond to an element that can mask the attributes "X", "Y" and "Z" position as attribute "Position"
+        bool canMaskXYZPositions() const;
 
         /// @brief return true if attribute of this tag is deprecated
         bool isAttributeDeprecated(SumoXMLAttr attr) const;
@@ -750,9 +778,9 @@ public:
                     parsedAttribute = defaultValue;
                 }
             }
-        } else if (tagProperties.canMaskXYPositions() && (attribute == SUMO_ATTR_POSITION)) {
+        } else if (tagProperties.canMaskXYZPositions() && (attribute == SUMO_ATTR_POSITION)) {
             // if element can mask their XYPosition, then must be extracted X Y coordiantes separeted
-            std::string x, y;
+            std::string x, y, z;
             // give a default value to parsedAttribute to avoid problem parsing invalid positions
             parsedAttribute="0,0";
             if(attrs.hasAttribute(SUMO_ATTR_X)) {
@@ -785,9 +813,24 @@ public:
                 // abort parsing (and creation) of element
                 abort = true;
             }
-            // create Position attribute using parsed coordinates X and Y
+            // Z attribute is optional
+            if(attrs.hasAttribute(SUMO_ATTR_Z)) {                
+                z = attrs.get<std::string>(SUMO_ATTR_Z, objectID.c_str(), parsedOk, false);
+                // check that Z attribute is valid
+                if(!canParse<double>(z)) {
+                    WRITE_WARNING("Format of optional " + attrProperties.getDescription() + " attribute '" + toString(SUMO_ATTR_Z) + "' of " +
+                                  additionalOfWarningMessage + " is invalid; Cannot be parsed to float; " + toString(tag) + " cannot be created");
+                    // leave Z attribute empty
+                    z.clear();
+                }
+            }
+            // create Position attribute using parsed coordinates X, Y and, optionally, Z
             if(!abort) {
-                parsedAttribute = x + "," + y;
+                if(z.empty()) {
+                    parsedAttribute = x + "," + y;
+                } else {
+                    parsedAttribute = x + "," + y + "," + z;
+                }
             }
         } else {
             // if attribute is optional and has a default value, obtain it. In other case, abort.
