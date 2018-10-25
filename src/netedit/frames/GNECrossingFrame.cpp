@@ -101,7 +101,7 @@ GNECrossingFrame::CurrentJunction::updateCurrentJunctionLabel(const std::string 
 GNECrossingFrame::EdgesSelector::EdgesSelector(GNECrossingFrame* crossingFrameParent) :
     FXGroupBox(crossingFrameParent->myContentFrame, ("selection of " + toString(SUMO_TAG_EDGE) + "s").c_str(), GUIDesignGroupBoxFrame),
     myCrossingFrameParent(crossingFrameParent),
-    myCurrentJunction(0) {
+    myCurrentJunction(nullptr) {
 
     // Create button for selected edges
     myUseSelectedEdges = new FXButton(this, ("Use selected " + toString(SUMO_TAG_EDGE) + "s").c_str(), 0, this, MID_GNE_ADDITIONALFRAME_USESELECTED, GUIDesignButton);
@@ -575,8 +575,10 @@ GNECrossingFrame::addCrossing(const GNEViewNet::ObjectsUnderCursor &objectsUnder
 
 void 
 GNECrossingFrame::createCrossingHotkey() {
-    // simply call onCmdCreateCrossing of CreateCrossing modul
-    myCreateCrossing->onCmdCreateCrossing(0,0,0);
+    if (myEdgeSelector->getCurrentJunction()) {
+        // simply call onCmdCreateCrossing of CreateCrossing modul
+        myCreateCrossing->onCmdCreateCrossing(0,0,0);
+    }
 }
 
 /****************************************************************************/
