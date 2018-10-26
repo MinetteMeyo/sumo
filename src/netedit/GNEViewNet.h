@@ -589,7 +589,7 @@ private:
         std::string reportDimensions();
 
         /// @brief draw rectangle selection
-        void drawRectangleSelection() const;
+        void drawRectangleSelection(const RGBColor& color) const;
 
     private:
         /// @brief Process boundary Selection

@@ -148,7 +148,7 @@ GNEVaporizer::drawGL(const GUIVisualizationSettings& s) const {
 
     // set color
     if (isAttributeCarrierSelected()) {
-        GLHelper::setColor(myViewNet->getNet()->selectedAdditionalColor);
+        GLHelper::setColor(s.selectedAdditionalColor);
     } else {
         GLHelper::setColor(RGBColor(120, 216, 0));
     }
@@ -174,7 +174,7 @@ GNEVaporizer::drawGL(const GUIVisualizationSettings& s) const {
     // draw position indicator (White) if isn't being drawn for selecting
     if ((width * exaggeration > 1) && !s.drawForSelecting) {
         if (isAttributeCarrierSelected()) {
-            GLHelper::setColor(myViewNet->getNet()->selectionColor);
+            GLHelper::setColor(s.selectionColor);
         } else {
             GLHelper::setColor(RGBColor::WHITE);
         }

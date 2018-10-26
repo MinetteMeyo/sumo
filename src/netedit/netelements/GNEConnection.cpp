@@ -308,7 +308,7 @@ GNEConnection::drawGL(const GUIVisualizationSettings& s) const {
         // Set color
         if (isAttributeCarrierSelected()) {
             // override with special colors (unless the color scheme is based on selection)
-            GLHelper::setColor(GNENet::selectedConnectionColor);
+            GLHelper::setColor(s.selectedConnectionColor);
         } else if (mySpecialColor != 0) {
             GLHelper::setColor(*mySpecialColor);
         } else {
